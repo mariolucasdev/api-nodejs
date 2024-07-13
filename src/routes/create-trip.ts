@@ -1,10 +1,15 @@
 import { FastifyInstance } from 'fastify'
 import { ZodTypeProvider } from 'fastify-type-provider-zod'
 import dayjs from 'dayjs'
+import LocalizedFormat from 'dayjs/plugin/localizedFormat'
+import 'dayjs/locale/pt-br'
 import nodemailer from 'nodemailer'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma'
 import { getMailerClient } from '../lib/mail'
+
+dayjs.locale('pt-br')
+dayjs.extend(LocalizedFormat)
 
 export async function createTrip(app: FastifyInstance) {
     app.withTypeProvider<ZodTypeProvider>().post('/trips', {
@@ -14,12 +19,13 @@ export async function createTrip(app: FastifyInstance) {
                 starts_at: z.coerce.date(),
                 ends_at: z.coerce.date(),
                 owner_name: z.string(),
-                owner_email: z.string().email()
+                owner_email: z.string().email(),
+                emails_to_invite: z.array(z.string().email())
             })
         }
     },
     async ( request ) => {
-        const { destination, starts_at, ends_at, owner_name, owner_email } = request.body
+        const { destination, starts_at, ends_at, owner_name, owner_email, emails_to_invite } = request.body
 
         if(dayjs(starts_at).isBefore(new Date())) {
             throw new Error("Invalid trip start date.")
@@ -35,15 +41,27 @@ export async function createTrip(app: FastifyInstance) {
                 starts_at,
                 ends_at,
                 participants: {
-                    create: {
-                        name: owner_name,
-                        email: owner_email,
-                        is_owner: true,
-                        is_confirmed: true
+                    createMany: {
+                        data: [
+                            {
+                                name: owner_name,
+                                email: owner_email,
+                                is_owner: true,
+                                is_confirmed: true
+                            },
+                            ...emails_to_invite.map(email => {
+                               return { email }
+                            })
+                        ]
                     }
                 }
             }
         })
+
+        const formatedStartDate = dayjs(starts_at).format('LL')
+        const formatedEndDate = dayjs(ends_at).format('LL')
+
+        const confirmationLink = `http://localhost:3333/trips/${trip.id}/confirm`
 
         const mail = await getMailerClient()
 
@@ -56,8 +74,20 @@ export async function createTrip(app: FastifyInstance) {
                 name: owner_name,
                 address: owner_email
             },
-            subject: "Testando serviço de E-mail!",
-            html: `<p>Olá, ${owner_name}! Sua viagem para ${destination} foi criada com sucesso!</p>`
+            subject: `Confirme sua viajem para ${destination} em ${formatedStartDate}`,
+            html: `
+                <div style="font-family: sans-serif; font-size: 16px; line-height: 1.6;">
+                    <p>Você solicitou uma viajem para <strong>${destination}</strong> nas datas de <strong>${formatedStartDate}</strong> a <strong>${formatedEndDate}</strong>.</p>
+                    <p></p>
+                    <p>Para confirmar sua viajem, clique no link abaixo:</p>
+                     <p></p>
+                    <p>
+                        <a href="${confirmationLink}">Confirmar viajem</a>
+                    </p>
+                     <p></p>
+                    <p> Caso você não tenha solicitado essa viajem, por favor, ignore esse e-mail.</p>
+                </div>
+            `.trim()
         })
 
         console.log(nodemailer.getTestMessageUrl(message))
