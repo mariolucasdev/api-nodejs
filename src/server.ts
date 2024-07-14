@@ -12,6 +12,7 @@ import { getLinks } from "./routes/get-links"
 import { getParticipants } from "./routes/get-participants"
 import { getTripDetails } from "./routes/get-trip-details"
 import { updateTrip } from "./routes/update-trip"
+import { getParticipant } from "./routes/get-participant"
 
 const app = fastify();
 
@@ -40,6 +41,7 @@ app.register(getLinks)
 
 /* particpants routes */
 app.register(getParticipants)
+app.register(getParticipant)
 app.register(createInvite)
 
 app.listen({ port: 3333}).then(() => {
