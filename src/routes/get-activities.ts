@@ -35,17 +35,17 @@ export async function getActivities(app: FastifyInstance) {
 
         const differenceDaysBetweenTripStartAndEnd = dayjs(trip.ends_at).diff(dayjs(trip.starts_at), 'days')
 
-        const activites = Array.from({ length: differenceDaysBetweenTripStartAndEnd + 1 }).map((_, index) => {
+        const activities = Array.from({ length: differenceDaysBetweenTripStartAndEnd + 1 }).map((_, index) => {
             const date = dayjs(trip.starts_at).add(index, 'days')
 
            return {
                 date: date.toDate(),
-                activites: trip.activities.filter(activity => dayjs(activity.occurs_at).isSame(date, 'day'))
+                activities: trip.activities.filter(activity => dayjs(activity.occurs_at).isSame(date, 'day'))
            }
         })
 
         return {
-            activites: trip.activities
+            activities
         }
     })
 }
