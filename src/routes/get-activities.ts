@@ -43,8 +43,6 @@ export async function getActivities(app: FastifyInstance) {
            }
         })
 
-        return activites
-
         return {
             activites: trip.activities
         }
