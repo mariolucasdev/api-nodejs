@@ -4,12 +4,13 @@ import { serializerCompiler, validatorCompiler } from "fastify-type-provider-zod
 import { confirmParticipant } from "./routes/confirm-participant"
 import { confirmTrip } from "./routes/confirm-trip"
 import { createAvticity } from "./routes/create-activity"
+import { createInvite } from "./routes/create-invite"
 import { createLink } from "./routes/create-link"
 import { createTrip } from "./routes/create-trip"
 import { getActivities } from "./routes/get-activities"
 import { getLinks } from "./routes/get-links"
 import { getParticipants } from "./routes/get-participants"
-import { createInvite } from "./routes/create-invite"
+import { getTripDetails } from "./routes/get-trip-details"
 import { updateTrip } from "./routes/update-trip"
 
 const app = fastify();
@@ -27,6 +28,7 @@ app.register(createTrip)
 app.register(confirmTrip)
 app.register(confirmParticipant)
 app.register(updateTrip)
+app.register(getTripDetails)
 
 /* activities routes */
 app.register(createAvticity)
